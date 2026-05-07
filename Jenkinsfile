@@ -43,10 +43,10 @@ pipeline {
                 ) {
 
                     sh '''
-                    pytest -n 2 \
+                    python3 -m pytest -n 2 \
                     --html=Reports/report.html \
                     --self-contained-html \
-                    --alluredir=allure-results
+                    --alluredir=allure-results \
                     '''
                 }
             }
