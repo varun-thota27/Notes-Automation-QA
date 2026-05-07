@@ -245,6 +245,7 @@ def driver(config):
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-gpu")
     options.add_argument("--start-maximized")
+    options.add_argument("--headless=new")
     
     # Existing stability options
     options.add_argument("--window-size=1920,1080")
@@ -269,7 +270,7 @@ def driver(config):
             grid_url = config.get_grid_hub_url()
             
             chrome = webdriver.Remote(
-                command_executor=f"{grid_url}/wd/hub",
+                command_executor=f"grid_url",
                 options=options
             )
             logger.info(f"[Setup] Remote WebDriver connected to Grid: {grid_url}")
