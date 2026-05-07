@@ -1,0 +1,126 @@
+############################
+# Python bytecode / cache
+############################
+__pycache__/
+*.py[cod]
+*$py.class
+
+############################
+# Virtual environments
+############################
+venv/
+.venv/
+env/
+ENV/
+
+############################
+# PyTest
+############################
+.pytest_cache/
+.cache/
+
+############################
+# Selenium artifacts
+############################
+screenshots/
+reports/
+html-report/
+allure-results/
+allure-report/
+
+############################
+# Logs
+############################
+*.log
+logs/
+
+############################
+# Environment variables
+############################
+.env
+.env.*
+config.ini
+
+############################
+# Config overrides
+############################
+config/local_config.yaml
+config/test_data.json
+
+############################
+# Test output / temp files
+############################
+output/
+tmp/
+temp/
+
+############################
+# IDE / Editor
+############################
+.vscode/
+.idea/
+*.iml
+
+############################
+# OS files
+############################
+.DS_Store
+Thumbs.db
+
+############################
+# Packaging
+############################
+*.egg-info/
+dist/
+build/
+
+############################
+# Coverage
+############################
+.coverage
+htmlcov/
+
+############################
+# Selenium drivers
+############################
+chromedriver*
+geckodriver*
+msedgedriver*
+
+############################
+# webdriver-manager cache
+############################
+.wdm/
+
+############################
+# Jupyter / notebooks
+############################
+.ipynb_checkpoints/
+
+############################
+# Mac/Linux hidden files
+############################
+*.swp
+*.swo
+
+############################
+# Runtime files
+############################
+*.pid
+*.seed
+
+############################
+# API temporary responses
+############################
+api_responses/
+
+############################
+# Jenkins / CI artifacts
+############################
+workspace/
+jenkins_home/
+
+############################
+# Parallel execution artifacts
+############################
+.pytest_parallel/
