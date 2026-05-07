@@ -270,7 +270,7 @@ def driver(config):
             grid_url = config.get_grid_hub_url()
             
             chrome = webdriver.Remote(
-                command_executor="grid_url",
+                command_executor=grid_url,
                 options=options
             )
             logger.info(f"[Setup] Remote WebDriver connected to Grid: {grid_url}")
