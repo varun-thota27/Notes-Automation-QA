@@ -39,7 +39,7 @@ logs/
 ############################
 .env
 .env.*
-config.ini
+# config.ini
 
 ############################
 # Config overrides
