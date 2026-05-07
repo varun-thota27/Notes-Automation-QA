@@ -33,6 +33,70 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Ensure screenshots folder exists at startup
+SCREENSHOTS_DIR = os.path.join("screenshots")
+os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+
+# Global storage for test status (to be set by pytest_runtest_logreport hook)
+_test_status = {}
+
+
+# ============================================================ #
+#  Pytest Hooks                                                #
+# ============================================================ #
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """
+    Automatically capture screenshot on test failure
+    and attach it to Allure report.
+    """
+
+    outcome = yield
+    report = outcome.get_result()
+
+    # Capture screenshot only if actual test step fails
+    if report.when == "call" and report.failed:
+
+        driver = item.funcargs.get("driver", None)
+
+        if driver:
+            try:
+                timestamp = datetime.now().strftime(
+                    "%Y%m%d_%H%M%S_%f"
+                )[:-3]
+
+                screenshot_filename = (
+                    f"{item.name}_{timestamp}_FAILED.png"
+                )
+
+                screenshot_path = os.path.join(
+                    SCREENSHOTS_DIR,
+                    screenshot_filename
+                )
+
+                # Save screenshot
+                driver.save_screenshot(screenshot_path)
+
+                logger.error(
+                    f"[FAILED TEST] Screenshot captured: "
+                    f"{screenshot_path}"
+                )
+
+                # Attach screenshot to Allure
+                with open(screenshot_path, "rb") as image_file:
+                    allure.attach(
+                        image_file.read(),
+                        name=screenshot_filename,
+                        attachment_type=allure.attachment_type.PNG
+                    )
+
+            except Exception as e:
+                logger.error(
+                    f"Failed to capture screenshot on failure: {e}"
+                )
+
+
 
 # ============================================================ #
 #  Allure Hooks & Fixtures                                     #
@@ -63,22 +127,35 @@ def attach_test_info(request):
 
 
 @pytest.fixture(scope="function")
-def capture_screenshot_on_failure(request):
-    """Capture screenshot on test failure."""
-    yield
-    
-    # Capture screenshot on failure
-    if request.node.rep_call.failed if hasattr(request.node, 'rep_call') else False:
-        if hasattr(request, 'driver'):
-            try:
-                screenshot_path = f"reports/screenshots/{request.node.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-                os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
-                request.driver.save_screenshot(screenshot_path)
-                with open(screenshot_path, "rb") as f:
-                    allure.attach(f.read(), name=f"screenshot_{request.node.name}.png", attachment_type=allure.attachment_type.PNG)
+def take_screenshot(request):
+    """On-demand screenshot fixture for use within tests.
+    Usage: take_screenshot("step_name") to capture at any point during test.
+    """
+    def _take_screenshot(step_name: str = "screenshot"):
+        try:
+            driver = request.getfixturevalue('driver') if 'driver' in request.fixturenames else None
+            if driver:
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')[:-3]
+                screenshot_filename = f"{request.node.name}_{step_name}_{timestamp}.png"
+                screenshot_path = os.path.join(SCREENSHOTS_DIR, screenshot_filename)
+                
+                driver.save_screenshot(screenshot_path)
                 logger.info(f"Screenshot captured: {screenshot_path}")
-            except Exception as e:
-                logger.debug(f"Could not capture screenshot: {e}")
+                
+                # Attach to Allure report
+                with open(screenshot_path, "rb") as f:
+                    allure.attach(
+                        f.read(),
+                        name=screenshot_filename,
+                        attachment_type=allure.attachment_type.PNG
+                    )
+                return screenshot_path
+            else:
+                logger.warning("Driver not available for screenshot")
+        except Exception as e:
+            logger.error(f"Failed to capture screenshot: {e}")
+    
+    return _take_screenshot
 
 
 # ============================================================ #

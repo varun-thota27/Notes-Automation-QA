@@ -26,19 +26,7 @@ pipeline {
             }
         }
 
-        // stage('Run Parallel Tests') {
-        //     steps {
-        //         bat '''
-        //         pytest -n 4 --html=Reports/report.html --self-contained-html
-        //         exit 0
-        //         '''
-        //     }
-        // }
-        // stage('Run Parallel Tests') {
-        //     steps {
-        //         bat 'pytest -n 2 --html=Reports/report.html --self-contained-html'
-        //     }
-        // }
+    
         stage('Run Parallel Tests') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
@@ -47,13 +35,7 @@ pipeline {
             }
         }
 
-        // stage('Archive Reports') {
-        //     steps {
-        //         archiveArtifacts artifacts: 'Reports/*', fingerprint: true
-        //         archiveArtifacts artifacts: 'Screenshots/*', fingerprint: true
-        //         archiveArtifacts artifacts: 'Logs/*', fingerprint: true
-        //     }
-        // }
+        
         stage('Archive Reports') {
             steps {
                 archiveArtifacts artifacts: 'Reports/*',
