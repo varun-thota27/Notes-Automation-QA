@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Selenium Hub - coordinates all nodes
   selenium-hub:
-    image: selenium/hub:4.0
+    image: selenium/hub:4.21.0
     container_name: selenium-hub
     ports:
       - "4444:4444"
@@ -11,17 +11,19 @@ services:
       - "4443:4443"
     environment:
       SE_SESSION_REQUEST_TIMEOUT: 300
-      SE_NODE_MAX_SESSIONS: 5
-      SE_NODE_SESSION_TIMEOUT: 300
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      # SE_NODE_MAX_SESSIONS: 5
+      # SE_NODE_SESSION_TIMEOUT: 300
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    networks:
+      - selenium-grid
 
   # Chrome Node 1
   chrome-node-1:
-    image: selenium/node-chrome:4.0
+    image: selenium/node-chrome:4.21.0
     container_name: chrome-node-1
     depends_on:
       - selenium-hub
@@ -33,18 +35,21 @@ services:
       SE_NODE_SESSION_TIMEOUT: 300
       SE_VNC_NO_VNCAT: true
       SE_JAVA_OPTS: "-Xmx512m"
+      SE_NODE_OVERRIDE_MAX_SESSIONS: true
     ports:
       - "7900:7900"  # VNC port for debugging (optional)
     shm_size: 2gb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
+    networks:
+      - selenium-grid
 
   # Chrome Node 2
   chrome-node-2:
-    image: selenium/node-chrome:4.0
+    image: selenium/node-chrome:4.21.0
     container_name: chrome-node-2
     depends_on:
       - selenium-hub
@@ -56,11 +61,15 @@ services:
       SE_NODE_SESSION_TIMEOUT: 300
       SE_VNC_NO_VNCAT: true
       SE_JAVA_OPTS: "-Xmx512m"
+      SE_NODE_OVERRIDE_MAX_SESSIONS: true
     ports:
       - "7901:7900"  # VNC port for debugging (optional)
     shm_size: 2gb
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    networks:
+      - selenium-grid
+    
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
