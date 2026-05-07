@@ -6,7 +6,7 @@ pipeline {
         stage('Checkout Source Code') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/sathwik774444/capstone_project_pytest.git'
+                    url: 'https://github.com/varun-thota27/Notes-Automation-QA.git'
             }
         }
 
