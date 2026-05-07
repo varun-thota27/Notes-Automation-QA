@@ -10,50 +10,80 @@ pipeline {
             }
         }
 
+        stage('Verify Python Installation') {
+            steps {
+                sh 'python3 --version'
+                sh 'pip3 --version'
+            }
+        }
+
         stage('Install Dependencies') {
             steps {
-                bat 'pip install -r requirements.txt'
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
         stage('Create Report Directories') {
             steps {
-                bat '''
-                if not exist Reports mkdir Reports
-                if not exist Screenshots mkdir Screenshots
-                if not exist Logs mkdir Logs
+                sh '''
+                mkdir -p Reports
+                mkdir -p Screenshots
+                mkdir -p Logs
+                mkdir -p allure-results
                 '''
             }
         }
 
-    
         stage('Run Parallel Tests') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    bat 'pytest -n 2 --html=Reports/report.html --self-contained-html'
+
+                catchError(
+                    buildResult: 'SUCCESS',
+                    stageResult: 'FAILURE'
+                ) {
+
+                    sh '''
+                    pytest -n 2 \
+                    --html=Reports/report.html \
+                    --self-contained-html \
+                    --alluredir=allure-results
+                    '''
                 }
             }
         }
 
-        
         stage('Archive Reports') {
             steps {
-                archiveArtifacts artifacts: 'Reports/*',
-                                fingerprint: true,
-                                allowEmptyArchive: true
 
-                archiveArtifacts artifacts: 'Screenshots/*',
-                                fingerprint: true,
-                                allowEmptyArchive: true
+                archiveArtifacts(
+                    artifacts: 'Reports/*',
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
 
-                archiveArtifacts artifacts: 'Logs/*',
-                                fingerprint: true,
-                                allowEmptyArchive: true
+                archiveArtifacts(
+                    artifacts: 'Screenshots/*',
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
+
+                archiveArtifacts(
+                    artifacts: 'Logs/*',
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
+
+                archiveArtifacts(
+                    artifacts: 'allure-results/*',
+                    fingerprint: true,
+                    allowEmptyArchive: true
+                )
             }
         }
 
         stage('Generate Allure Report') {
             steps {
+
                 allure([
                     includeProperties: false,
                     jdk: '',
@@ -65,8 +95,11 @@ pipeline {
     }
 
     post {
+
         always {
+
             publishHTML([
+
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
