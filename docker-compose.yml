@@ -1,75 +1,83 @@
-# version: '3.8'
+name: selenium-grid
 
 services:
-  # Selenium Hub - coordinates all nodes
+
   selenium-hub:
+
     image: selenium/hub:4.21.0
     container_name: selenium-hub
+
+    restart: always
+
     ports:
-      - "4444:4444"
       - "4442:4442"
       - "4443:4443"
+      - "4444:4444"
+
     environment:
-      SE_SESSION_REQUEST_TIMEOUT: 300
-      # SE_NODE_MAX_SESSIONS: 5
-      # SE_NODE_SESSION_TIMEOUT: 300
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+      SE_SESSION_REQUEST_TIMEOUT: 600
+
     networks:
       - selenium-grid
 
-  # Chrome Node 1
+
+
   chrome-node-1:
+
     image: selenium/node-chrome:4.21.0
     container_name: chrome-node-1
+
+    restart: always
+
     depends_on:
       - selenium-hub
+
+    shm_size: 2gb
+
     environment:
       SE_EVENT_BUS_HOST: selenium-hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
       SE_NODE_MAX_SESSIONS: 1
-      SE_NODE_SESSION_TIMEOUT: 300
-      SE_VNC_NO_VNCAT: true
-      SE_JAVA_OPTS: "-Xmx512m"
       SE_NODE_OVERRIDE_MAX_SESSIONS: true
+      SE_NODE_SESSION_TIMEOUT: 300
+      SE_JAVA_OPTS: "-Xmx512m"
+
     ports:
-      - "7900:7900"  # VNC port for debugging (optional)
-    shm_size: 2gb
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+      - "7900:7900"
+
     networks:
       - selenium-grid
 
-  # Chrome Node 2
+
+
   chrome-node-2:
+
     image: selenium/node-chrome:4.21.0
     container_name: chrome-node-2
+
+    restart: always
+
     depends_on:
       - selenium-hub
+
+    shm_size: 2gb
+
     environment:
       SE_EVENT_BUS_HOST: selenium-hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
       SE_NODE_MAX_SESSIONS: 1
-      SE_NODE_SESSION_TIMEOUT: 300
-      SE_VNC_NO_VNCAT: true
-      SE_JAVA_OPTS: "-Xmx512m"
       SE_NODE_OVERRIDE_MAX_SESSIONS: true
+      SE_NODE_SESSION_TIMEOUT: 300
+      SE_JAVA_OPTS: "-Xmx512m"
+
     ports:
-      - "7901:7900"  # VNC port for debugging (optional)
-    shm_size: 2gb
+      - "7901:7900"
+
     networks:
       - selenium-grid
-    
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:5555/wd/hub/status"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 5
+
+
+networks:
+  selenium-grid:
