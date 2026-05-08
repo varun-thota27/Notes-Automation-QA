@@ -58,7 +58,7 @@ pipeline {
             steps {
 
                 sh '''
-                docker compose up -d
+                docker-compose up -d
 
                 echo "Waiting for Selenium Grid to initialize..."
 
@@ -152,7 +152,7 @@ pipeline {
 
 
             sh '''
-            docker compose down
+            docker-compose down
             '''
         }
     }
