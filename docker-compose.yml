@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   # Selenium Hub - coordinates all nodes
@@ -31,7 +31,7 @@ services:
       SE_EVENT_BUS_HOST: selenium-hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-      SE_NODE_MAX_SESSIONS: 2
+      SE_NODE_MAX_SESSIONS: 1
       SE_NODE_SESSION_TIMEOUT: 300
       SE_VNC_NO_VNCAT: true
       SE_JAVA_OPTS: "-Xmx512m"
@@ -57,7 +57,7 @@ services:
       SE_EVENT_BUS_HOST: selenium-hub
       SE_EVENT_BUS_PUBLISH_PORT: 4442
       SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
-      SE_NODE_MAX_SESSIONS: 2
+      SE_NODE_MAX_SESSIONS: 1
       SE_NODE_SESSION_TIMEOUT: 300
       SE_VNC_NO_VNCAT: true
       SE_JAVA_OPTS: "-Xmx512m"
