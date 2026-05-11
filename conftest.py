@@ -31,6 +31,9 @@ from api.api_client import APIClient
 from utils.config_reader import ConfigReader
 from utils.logger import get_logger
 
+# Import agentic components
+from ai_engine.agents import FailureAnalysisAgent, RerunAgent
+
 logger = get_logger(__name__)
 
 # Ensure screenshots folder exists at startup
@@ -48,53 +51,114 @@ _test_status = {}
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """
-    Automatically capture screenshot on test failure
-    and attach it to Allure report.
+    Automatically capture screenshot on test failure,
+    attach it to Allure report,
+    and trigger AI-assisted failure analysis.
+    
+    Hook Execution Flow:
+    - Detects test failures (report.when == "call" and report.failed)
+    - Captures screenshot if WebDriver exists (UI tests)
+    - Analyzes failure with LLM (both UI and API tests)
+    - Recommends retry strategy
     """
 
     outcome = yield
     report = outcome.get_result()
 
-    # Capture screenshot only if actual test step fails
-    if report.when == "call" and report.failed:
+    # ============================================================
+    # Only process actual test failures (not setup/teardown)
+    # ============================================================
+    if not (report.when == "call" and report.failed):
+        return
 
-        driver = item.funcargs.get("driver", None)
+    logger.error(f"[Hook Triggered] Test failed: {item.name}")
 
-        if driver:
-            try:
-                timestamp = datetime.now().strftime(
-                    "%Y%m%d_%H%M%S_%f"
-                )[:-3]
+    driver = item.funcargs.get("driver", None)
 
-                screenshot_filename = (
-                    f"{item.name}_{timestamp}_FAILED.png"
+    # ============================================================
+    # SECTION 1: Screenshot Capture (UI Tests Only)
+    # ============================================================
+    if driver:
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+            screenshot_filename = f"{item.name}_{timestamp}_FAILED.png"
+            screenshot_path = os.path.join(SCREENSHOTS_DIR, screenshot_filename)
+
+            driver.save_screenshot(screenshot_path)
+            logger.error(f"[Screenshot] Captured: {screenshot_path}")
+
+            with open(screenshot_path, "rb") as image_file:
+                allure.attach(
+                    image_file.read(),
+                    name=screenshot_filename,
+                    attachment_type=allure.attachment_type.PNG
                 )
+        except Exception as screenshot_error:
+            logger.error(
+                f"[Screenshot Error] Failed to capture screenshot: {screenshot_error}",
+                exc_info=True
+            )
 
-                screenshot_path = os.path.join(
-                    SCREENSHOTS_DIR,
-                    screenshot_filename
-                )
+    # ============================================================
+    # SECTION 2: AI Failure Analysis (Both UI & API Tests)
+    # ============================================================
+    if call.excinfo is None:
+        logger.warning("[AI Analysis] No exception info available")
+        return
 
-                # Save screenshot
-                driver.save_screenshot(screenshot_path)
+    try:
+        error_message = str(call.excinfo.value)
+        logger.info(f"[AI Analysis] Starting analysis for: {item.name}")
+        logger.debug(f"[AI Analysis] Error: {error_message[:200]}")
 
-                logger.error(
-                    f"[FAILED TEST] Screenshot captured: "
-                    f"{screenshot_path}"
-                )
+        # Initialize and run analysis agent
+        analysis_agent = FailureAnalysisAgent()
+        analysis = analysis_agent.analyze_failure(
+            test_name=item.name,
+            error_message=error_message
+        )
 
-                # Attach screenshot to Allure
-                with open(screenshot_path, "rb") as image_file:
-                    allure.attach(
-                        image_file.read(),
-                        name=screenshot_filename,
-                        attachment_type=allure.attachment_type.PNG
-                    )
+        if analysis and len(analysis.strip()) > 0:
+            logger.info(f"[AI Analysis] Analysis completed successfully")
+            logger.debug(f"[AI Analysis] Result:\n{analysis[:500]}")
 
-            except Exception as e:
-                logger.error(
-                    f"Failed to capture screenshot on failure: {e}"
-                )
+            allure.attach(
+                analysis,
+                name="AI Failure Analysis",
+                attachment_type=allure.attachment_type.TEXT
+            )
+        else:
+            logger.warning("[AI Analysis] No analysis returned from agent")
+
+    except Exception as ai_error:
+        logger.error(
+            f"[AI Analysis Error] Failed to analyze failure: {ai_error}",
+            exc_info=True
+        )
+
+    # ============================================================
+    # SECTION 3: Retry Decision Strategy
+    # ============================================================
+    if call.excinfo is None:
+        return
+
+    try:
+        error_message = str(call.excinfo.value)
+        should_retry = RerunAgent.should_rerun(error_message)
+
+        logger.warning(f"[Rerun Agent] Retry Recommended: {should_retry}")
+
+        allure.attach(
+            f"Retry Recommended: {should_retry}",
+            name="Rerun Decision",
+            attachment_type=allure.attachment_type.TEXT
+        )
+
+    except Exception as rerun_error:
+        logger.error(
+            f"[Rerun Agent Error] {rerun_error}",
+            exc_info=True
+        )
 
 
 

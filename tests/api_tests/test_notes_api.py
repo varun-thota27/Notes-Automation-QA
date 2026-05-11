@@ -16,7 +16,9 @@ import concurrent.futures
 
 from api.api_client import APIClient
 from utils.logger import get_logger
-
+from ai_engine.agents.test_data_agent import (
+    AIDataAgent
+)
 logger = get_logger(__name__)
 
 
@@ -38,6 +40,11 @@ class TestNotesAPI:
         num_requests = 5
         response_times = []
 
+        agent = AIDataAgent()
+
+        data = agent.generate_note_data()
+
+        print(data)
         for i in range(num_requests):
             start = time.time()
             response = api_client.get_notes()

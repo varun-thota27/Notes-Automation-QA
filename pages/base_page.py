@@ -2,7 +2,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from utils.logger import get_logger
 import time
-
+from selenium.common.exceptions import NoSuchElementException
+from ai_engine.agents.healing_agent import HealingAgent
 logger = get_logger(__name__)
 
 
@@ -14,7 +15,47 @@ class BasePage:
         self.wait = WebDriverWait(driver, 10)
 
     def find_element(self, by, value):
-        return self.wait.until(EC.presence_of_element_located((by, value)))
+
+        try:
+
+            return self.wait.until(
+                EC.presence_of_element_located((by, value))
+            )
+
+        except Exception as e:
+
+            logger.warning(
+                f"[Healing Agent] "
+                f"Locator failed: [{by}] '{value}'"
+            )
+
+            try:
+
+                healing_agent = HealingAgent()
+
+                healed_locator = healing_agent.heal_locator(
+
+                    locator=(by, value),
+
+                    driver=self.driver,
+
+                    error_message=str(e)
+
+                )
+
+                logger.info(
+                    f"[Healing Agent] "
+                    f"Suggested Locator:\n{healed_locator}"
+                )
+
+            except Exception as healing_error:
+
+                logger.error(
+                    f"[Healing Agent Error] "
+                    f"{healing_error}"
+                )
+
+            raise e
 
     def find_clickable(self, by, value):
         return self.wait.until(EC.element_to_be_clickable((by, value)))
@@ -74,3 +115,5 @@ class BasePage:
     def refresh_page(self):
         self.driver.refresh()
         logger.info("Page refreshed")
+
+    
